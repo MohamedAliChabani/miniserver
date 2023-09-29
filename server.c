@@ -1,7 +1,17 @@
 #include "server.h"
 #include "http_utils.h"
 
-void init_server(int *sockfd)
+int sockfd;
+
+void exit_at_ctrl_c(int sig)
+{
+    // Closing the server socket
+    if (close(sockfd) < 0)
+        handle_error("Could not close communication");
+    exit(EXIT_SUCCESS);
+}
+
+void init_server()
 {
     struct sockaddr_in server_info = {0};
     server_info.sin_family = AF_INET;
@@ -10,23 +20,22 @@ void init_server(int *sockfd)
     socklen_t server_info_len = sizeof(server_info);
 
     // Creating the socket
-    *sockfd = socket(AF_INET, SOCK_STREAM,0);
+    sockfd = socket(AF_INET, SOCK_STREAM,0);
     if (sockfd < 0)
         handle_error("Could not create socket");
     
     // Binding the socket to an addr and a port
-    if (bind(*sockfd, (struct sockaddr *) &server_info, server_info_len) < 0)
+    if (bind(sockfd, (struct sockaddr *) &server_info, server_info_len) < 0)
         handle_error("Could not bind the communication to an address and port");
 
     // Listening for incoming connections
-    if (listen(*sockfd, 5) < 0)
+    if (listen(sockfd, 5) < 0)
         handle_error("Could not accept communication requests");
 }
 
 int main(void)
 {
-    int sockfd;
-    init_server(&sockfd);
+    init_server();
 
     struct sockaddr_in client_info = {0};
     socklen_t client_info_len = sizeof(client_info);
@@ -59,9 +68,6 @@ int main(void)
         printf("---------------------------------------------\n");
     }
 
-    // Closing the server socket
-    if (close(sockfd) < 0)
-        handle_error("Could not close communication");
 
     return EXIT_SUCCESS;
 }
